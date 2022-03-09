@@ -1,13 +1,13 @@
+use chain_data::SlotStatus;
+
+pub mod chain_data;
 pub mod grpc_plugin_source;
 pub mod metrics;
 pub mod terminal_target;
-pub mod postgres_target;
-pub mod postgres_types_numeric;
 pub mod websocket_source;
 
 use {
     async_trait::async_trait,
-    postgres_types::ToSql,
     serde_derive::Deserialize,
     solana_sdk::{account::Account, pubkey::Pubkey},
     std::sync::Arc,
@@ -28,43 +28,36 @@ impl<T, E: std::fmt::Debug> AnyhowWrap for Result<T, E> {
 #[derive(Clone, PartialEq, Debug)]
 pub struct AccountWrite {
     pub pubkey: Pubkey,
-    pub slot: i64,
-    pub write_version: i64,
-    pub lamports: i64,
+    pub slot: u64,
+    pub write_version: u64,
+    pub lamports: u64,
     pub owner: Pubkey,
     pub executable: bool,
-    pub rent_epoch: i64,
+    pub rent_epoch: u64,
     pub data: Vec<u8>,
     pub is_selected: bool,
 }
 
 impl AccountWrite {
-    fn from(pubkey: Pubkey, slot: u64, write_version: i64, account: Account) -> AccountWrite {
+    fn from(pubkey: Pubkey, slot: u64, write_version: u64, account: Account) -> AccountWrite {
         AccountWrite {
             pubkey,
-            slot: slot as i64, // TODO: narrowing!
+            slot,
             write_version,
-            lamports: account.lamports as i64, // TODO: narrowing!
+            lamports: account.lamports, // TODO: narrowing!
             owner: account.owner,
             executable: account.executable,
-            rent_epoch: account.rent_epoch as i64, // TODO: narrowing!
+            rent_epoch: account.rent_epoch, // TODO: narrowing!
             data: account.data,
             is_selected: true,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, ToSql)]
-pub enum SlotStatus {
-    Rooted,
-    Confirmed,
-    Processed,
-}
-
 #[derive(Clone, Debug)]
 pub struct SlotUpdate {
-    pub slot: i64,
-    pub parent: Option<i64>,
+    pub slot: u64,
+    pub parent: Option<u64>,
     pub status: SlotStatus,
 }
 
@@ -123,60 +116,4 @@ pub struct Config {
     pub grpc_sources: Vec<GrpcSourceConfig>,
     pub snapshot_source: SnapshotSourceConfig,
     pub rpc_ws_url: String,
-}
-
-#[async_trait]
-pub trait AccountTable: Sync + Send {
-    fn table_name(&self) -> &str;
-    async fn insert_account_write(
-        &self,
-        client: &postgres_query::Caching<tokio_postgres::Client>,
-        account_write: &AccountWrite,
-    ) -> anyhow::Result<()>;
-}
-
-pub type AccountTables = Vec<Arc<dyn AccountTable>>;
-
-pub struct RawAccountTable {}
-
-pub fn encode_address(addr: &Pubkey) -> String {
-    bs58::encode(&addr.to_bytes()).into_string()
-}
-
-#[async_trait]
-impl AccountTable for RawAccountTable {
-    fn table_name(&self) -> &str {
-        "account_write"
-    }
-
-    async fn insert_account_write(
-        &self,
-        client: &postgres_query::Caching<tokio_postgres::Client>,
-        account_write: &AccountWrite,
-    ) -> anyhow::Result<()> {
-        let pubkey = encode_address(&account_write.pubkey);
-        let owner = encode_address(&account_write.owner);
-
-        // TODO: should update for same write_version to work with websocket input
-        let query = postgres_query::query!(
-            "INSERT INTO account_write
-            (pubkey_id, slot, write_version, is_selected,
-             owner_id, lamports, executable, rent_epoch, data)
-            VALUES
-            (map_pubkey($pubkey), $slot, $write_version, $is_selected,
-             map_pubkey($owner), $lamports, $executable, $rent_epoch, $data)
-            ON CONFLICT (pubkey_id, slot, write_version) DO NOTHING",
-            pubkey,
-            slot = account_write.slot,
-            write_version = account_write.write_version,
-            is_selected = account_write.is_selected,
-            owner,
-            lamports = account_write.lamports,
-            executable = account_write.executable,
-            rent_epoch = account_write.rent_epoch,
-            data = account_write.data,
-        );
-        let _ = query.execute(client).await?;
-        Ok(())
-    }
 }

@@ -1,12 +1,19 @@
-use crate::{AccountWrite, SlotStatus, SlotUpdate};
+use crate::{
+    chain_data::{AccountData, ChainData, SlotData},
+    metrics, AccountWrite, SlotStatus, SlotUpdate,
+};
 use log::*;
-use std::collections::HashMap;
+use solana_sdk::{
+    account::{AccountSharedData, WritableAccount},
+    clock::Epoch,
+};
+use std::{collections::HashMap, sync::Arc};
 
 struct Slots {
     // non-rooted only
-    slots: HashMap<i64, SlotUpdate>,
-    newest_processed_slot: Option<i64>,
-    newest_rooted_slot: Option<i64>,
+    slots: HashMap<u64, SlotUpdate>,
+    newest_processed_slot: Option<u64>,
+    newest_rooted_slot: Option<u64>,
 }
 
 #[derive(Default)]
@@ -40,14 +47,14 @@ impl Slots {
                 previous.parent = update.parent;
                 result.parent_update = true;
             }
-        } else if update.slot > self.newest_rooted_slot.unwrap_or(-1) {
+        } else if update.slot > self.newest_rooted_slot.unwrap_or(0) {
             self.slots.insert(update.slot, update.clone());
         } else {
             result.discard_old = true;
         }
 
         if update.status == SlotStatus::Rooted {
-            let old_slots: Vec<i64> = self
+            let old_slots: Vec<u64> = self
                 .slots
                 .keys()
                 .filter(|s| **s <= update.slot)
@@ -56,13 +63,13 @@ impl Slots {
             for old_slot in old_slots {
                 self.slots.remove(&old_slot);
             }
-            if self.newest_rooted_slot.unwrap_or(-1) < update.slot {
+            if self.newest_rooted_slot.unwrap_or(0) < update.slot {
                 self.newest_rooted_slot = Some(update.slot);
                 result.new_rooted_head = true;
             }
         }
 
-        if self.newest_processed_slot.unwrap_or(-1) < update.slot {
+        if self.newest_processed_slot.unwrap_or(0) < update.slot {
             self.newest_processed_slot = Some(update.slot);
             result.new_processed_head = true;
         }
@@ -85,8 +92,12 @@ pub async fn init() -> anyhow::Result<(
 
     let account_write_queue_receiver_c = account_write_queue_receiver.clone();
 
+    let mut chain = ChainData::new();
+
+    // update handling thread, reads both sloths and account updates
     tokio::spawn(async move {
-        // let mut client_opt = None;
+        let mut slots = Slots::new();
+
         loop {
             // Retrieve up to batch_size account writes
             let mut write_batch = Vec::new();
@@ -96,25 +107,39 @@ pub async fn init() -> anyhow::Result<(
                     .await
                     .expect("sender must stay alive"),
             );
+            loop {
+                match account_write_queue_receiver_c.try_recv() {
+                    Ok(write) => write_batch.push(write),
+                    Err(async_channel::TryRecvError::Empty) => break,
+                    Err(async_channel::TryRecvError::Closed) => {
+                        panic!("sender must stay alive")
+                    }
+                };
+            }
 
-            trace!(
+            info!(
                 "account write, batch {}, channel size {}",
                 write_batch.len(),
                 account_write_queue_receiver_c.len(),
             );
 
             for write in write_batch.iter() {
-                info!("write {}", write.pubkey.to_string());
+                trace!("write {}", write.pubkey.to_string());
+                chain.update_account(
+                    write.pubkey,
+                    AccountData {
+                        slot: write.slot,
+                        account: WritableAccount::create(
+                            write.lamports,
+                            write.data.clone(),
+                            write.owner,
+                            write.executable,
+                            write.rent_epoch as Epoch,
+                        ),
+                    },
+                );
             }
-        }
-    });
 
-    // slot update handling thread
-    // let mut metric_slot_queue = metrics_sender.register_u64("slot_insert_queue".into());
-    tokio::spawn(async move {
-        let mut slots = Slots::new();
-
-        loop {
             let update = slot_queue_receiver
                 .recv()
                 .await
@@ -132,6 +157,12 @@ pub async fn init() -> anyhow::Result<(
             }
 
             info!("newest slot {}", update.slot);
+            chain.update_slot(SlotData {
+                slot: update.slot,
+                parent: update.parent,
+                status: update.status,
+                chain: 0,
+            })
         }
     });
 

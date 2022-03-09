@@ -2,8 +2,7 @@
 members = [
         "accountsdb-plugin-grpc",
         "lib",
-        "connector-raw",
-        "connector-mango",
+        "connector-fills",
 ]
 
 

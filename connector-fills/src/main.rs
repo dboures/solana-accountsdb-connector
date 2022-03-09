@@ -1,5 +1,3 @@
-mod mango;
-
 use {
     log::*,
     solana_accountsdb_connector_lib::*,
@@ -23,13 +21,6 @@ async fn main() -> anyhow::Result<()> {
 
     solana_logger::setup_with_default("info");
     info!("startup");
-
-    // let account_tables: AccountTables = vec![
-    //     Arc::new(RawAccountTable {}),
-    //     Arc::new(mango::MangoAccountTable {}),
-    //     Arc::new(mango::MangoGroupTable {}),
-    //     Arc::new(mango::MangoCacheTable {}),
-    // ];
 
     let metrics_tx = metrics::start();
 
