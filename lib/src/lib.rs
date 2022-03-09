@@ -1,5 +1,6 @@
 pub mod grpc_plugin_source;
 pub mod metrics;
+pub mod terminal_target;
 pub mod postgres_target;
 pub mod postgres_types_numeric;
 pub mod websocket_source;

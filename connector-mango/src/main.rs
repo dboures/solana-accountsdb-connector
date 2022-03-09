@@ -24,17 +24,16 @@ async fn main() -> anyhow::Result<()> {
     solana_logger::setup_with_default("info");
     info!("startup");
 
-    let account_tables: AccountTables = vec![
-        Arc::new(RawAccountTable {}),
-        Arc::new(mango::MangoAccountTable {}),
-        Arc::new(mango::MangoGroupTable {}),
-        Arc::new(mango::MangoCacheTable {}),
-    ];
+    // let account_tables: AccountTables = vec![
+    //     Arc::new(RawAccountTable {}),
+    //     Arc::new(mango::MangoAccountTable {}),
+    //     Arc::new(mango::MangoGroupTable {}),
+    //     Arc::new(mango::MangoCacheTable {}),
+    // ];
 
     let metrics_tx = metrics::start();
 
-    let (account_write_queue_sender, slot_queue_sender) =
-        postgres_target::init(&config.postgres_target, account_tables, metrics_tx.clone()).await?;
+    let (account_write_queue_sender, slot_queue_sender) = terminal_target::init().await?;
 
     info!("postgres done");
     let use_accountsdb = true;
