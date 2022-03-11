@@ -1,16 +1,14 @@
 use chain_data::SlotStatus;
 
 pub mod chain_data;
+pub mod fill_event_filter;
 pub mod grpc_plugin_source;
 pub mod metrics;
-pub mod terminal_target;
 pub mod websocket_source;
 
 use {
-    async_trait::async_trait,
     serde_derive::Deserialize,
     solana_sdk::{account::Account, pubkey::Pubkey},
-    std::sync::Arc,
 };
 
 trait AnyhowWrap {
@@ -111,9 +109,17 @@ pub struct SnapshotSourceConfig {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+pub struct MarketConfig {
+    pub name: String,
+    pub event_queue: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub postgres_target: PostgresConfig,
     pub grpc_sources: Vec<GrpcSourceConfig>,
     pub snapshot_source: SnapshotSourceConfig,
     pub rpc_ws_url: String,
+    pub bind_ws_addr: String,
+    pub markets: Vec<MarketConfig>,
 }

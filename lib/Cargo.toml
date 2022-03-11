@@ -23,6 +23,10 @@ postgres-types = { version = "0.2", features = ["array-impls", "derive"] }
 postgres-native-tls = "0.5"
 native-tls = "0.2"
 
+arrayref = "^0.3.6"
+#mango = { git = "https://github.com/blockworks-foundation/mango-v3", gitref = "f4294688fb00ff18b2bf0b730d79ce005f7d124e", features = ["client"] }
+mango = { git = "https://github.com/sircrusher/mango-v3"}
+
 # postgres_query hasn't updated its crate in a while
 postgres_query = { git = "https://github.com/nolanderc/rust-postgres-query", rev = "b4422051c8a31fbba4a35f88004c1cefb1878dd5" }
 
