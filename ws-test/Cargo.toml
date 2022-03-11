@@ -1,0 +1,16 @@
+[package]
+name = "ws-test"
+version = "0.1.0"
+authors = ["Crusher <crusher@mango.markets>"]
+edition = "2021"
+
+[dependencies]
+tungstenite = "*"
+tokio-tungstenite = "*"
+futures-channel = "*"
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+async-channel = "1.6"
+tokio = { version = "1", features = ["full"] }
+log = "0.4"
+anyhow = "1.0"
+solana-logger = "=1.8.14"

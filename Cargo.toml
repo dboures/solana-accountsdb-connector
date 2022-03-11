@@ -3,6 +3,7 @@ members = [
         "accountsdb-plugin-grpc",
         "lib",
         "connector-fills",
+        "ws-test"
 ]
 
 
