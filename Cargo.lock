@@ -989,6 +989,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "connector-fills"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "async-trait",
+ "bs58 0.3.1",
+ "fixed",
+ "futures-channel",
+ "futures-util",
+ "log 0.4.14",
+ "mango 3.2.1",
+ "mango-common 3.0.0 (git+https://github.com/ckamm/mango-v3?rev=2e1e4886544bdb1c5f773a3856305210f622fa94)",
+ "postgres-types",
+ "postgres_query",
+ "serde_json",
+ "solana-accountsdb-connector-lib",
+ "solana-logger",
+ "tokio",
+ "tokio-postgres",
+ "tokio-tungstenite",
+ "toml",
+ "ws",
+]
+
+[[package]]
 name = "console"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4608,32 +4634,6 @@ dependencies = [
  "spl-token",
  "thiserror",
  "zstd",
-]
-
-[[package]]
-name = "solana-accountsdb-connector-fills"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "async-trait",
- "bs58 0.3.1",
- "fixed",
- "futures-channel",
- "futures-util",
- "log 0.4.14",
- "mango 3.2.1",
- "mango-common 3.0.0 (git+https://github.com/ckamm/mango-v3?rev=2e1e4886544bdb1c5f773a3856305210f622fa94)",
- "postgres-types",
- "postgres_query",
- "serde_json",
- "solana-accountsdb-connector-lib",
- "solana-logger",
- "tokio",
- "tokio-postgres",
- "tokio-tungstenite",
- "toml",
- "ws",
 ]
 
 [[package]]

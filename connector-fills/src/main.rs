@@ -18,9 +18,7 @@ use std::{
 use futures_channel::mpsc::{unbounded, UnboundedReceiver, UnboundedSender};
 use futures_util::{pin_mut, stream::TryStreamExt, SinkExt, Stream, StreamExt};
 
-use solana_accountsdb_connector_lib::{
-    fill_event_filter::FillEventFilterMessage,
-};
+use solana_accountsdb_connector_lib::fill_event_filter::FillEventFilterMessage;
 use tokio::{
     net::{TcpListener, TcpStream},
     pin,
@@ -32,7 +30,7 @@ use tokio_tungstenite::tungstenite::protocol::Message;
 type PeerMap = Arc<Mutex<HashMap<SocketAddr, UnboundedSender<Message>>>>;
 
 async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
-    println!("Incoming TCP connection from: {}", addr);
+    info!("Incoming TCP connection from: {}", addr);
 
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
@@ -50,9 +48,9 @@ async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: Socke
 
     // pin_mut!(broadcast_incoming, receive_from_others);
     pin_mut!(receive_from_others);
-    (receive_from_others).await;
+    (receive_from_others).await.unwrap();
 
-    println!("{} disconnected", &addr);
+    info!("{} disconnected", &addr);
     peer_map.lock().unwrap().remove(&addr);
 }
 
@@ -60,7 +58,7 @@ async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: Socke
 async fn main() -> anyhow::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 2 {
-        println!("requires a config file argument");
+        error!("requires a config file argument");
         return Ok(());
     }
 
@@ -83,32 +81,27 @@ async fn main() -> anyhow::Result<()> {
 
     let try_socket = TcpListener::bind(&config.bind_ws_addr).await;
     let listener = try_socket.expect("Failed to bind");
-    println!("Listening on: {}", config.bind_ws_addr);
-
-    //let (sender, receiver) = async_channel::unbounded::<String>();
+    info!("Listening on: {}", config.bind_ws_addr);
 
     let state_clone = state.clone();
-    
+
     //breadcaster thread
     tokio::spawn(async move {
-        //println!("bcaster");
         pin!(fill_receiver);
         loop {
             let message = fill_receiver.recv().await.unwrap();
             match message {
                 FillEventFilterMessage::Update(update) => {
-                    //println!("update!");
+                    info!("ws update {} {:?} fill", update.market, update.status);
 
                     let mut state_clone3 = state_clone.lock().unwrap().clone();
 
                     for (k, v) in state_clone3.iter_mut() {
-                        //println!("  > {} {:?} {}", k, update.status, update.event.price);
+                        trace!("  > {}", k);
 
                         let json = serde_json::to_string(&update);
 
-                        v.send(Message::Text(json.unwrap()))
-                            .await
-                            .unwrap()
+                        v.send(Message::Text(json.unwrap())).await.unwrap()
                     }
                 }
                 FillEventFilterMessage::Checkpoint(checkpoint) => {
@@ -119,7 +112,6 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
         }
-        //println!("bcaster3");
     });
 
     info!("open socket");
