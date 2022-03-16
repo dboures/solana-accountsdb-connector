@@ -1,6 +1,5 @@
 use {
-    log::*, solana_sdk::account::AccountSharedData, solana_sdk::pubkey::Pubkey,
-    std::collections::HashMap,
+    solana_sdk::account::AccountSharedData, solana_sdk::pubkey::Pubkey, std::collections::HashMap,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -218,7 +217,9 @@ impl ChainData {
             // either the slot is rooted or in the current chain
             .map(|s| s.status == SlotStatus::Rooted || s.chain == self.newest_processed_slot)
             // if the slot can't be found but preceeds newest rooted, use it too (old rooted slots are removed)
-            .unwrap_or(write.slot <= self.newest_rooted_slot)
+            .unwrap_or(
+                write.slot <= self.newest_rooted_slot || write.slot > self.newest_processed_slot,
+            )
     }
 
     /// Cloned snapshot of all the most recent live writes per pubkey

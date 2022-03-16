@@ -43,6 +43,8 @@ rand = "0.7"
 anyhow = "1.0"
 fixed = { version = "=1.9.0", features = ["serde"] }
 bytes = "1.0"
+base64 = "*"
+bytemuck = "^1.7.3"
 
 futures = "0.3.17"
 futures-core = "0.3"
