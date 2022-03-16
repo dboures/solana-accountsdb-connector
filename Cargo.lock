@@ -2716,7 +2716,7 @@ dependencies = [
 [[package]]
 name = "mango"
 version = "3.4.1"
-source = "git+https://github.com/sircrusher/mango-v3#2930727acc2a6b15abfab8f4aad10ad860db782a"
+source = "git+https://github.com/blockworks-foundation/mango-v3#856be2231ea419d5423400e4f57d20e44ca20647"
 dependencies = [
  "anchor-lang 0.20.1",
  "arrayref",
@@ -2726,9 +2726,9 @@ dependencies = [
  "enumflags2",
  "fixed",
  "fixed-macro",
- "mango-common 3.0.0 (git+https://github.com/sircrusher/mango-v3)",
- "mango-logs 0.1.0 (git+https://github.com/sircrusher/mango-v3)",
- "mango-macro 3.0.0 (git+https://github.com/sircrusher/mango-v3)",
+ "mango-common 3.0.0 (git+https://github.com/blockworks-foundation/mango-v3)",
+ "mango-logs 0.1.0 (git+https://github.com/blockworks-foundation/mango-v3)",
+ "mango-macro 3.0.0 (git+https://github.com/blockworks-foundation/mango-v3)",
  "num_enum",
  "safe-transmute",
  "serde",
@@ -2753,7 +2753,7 @@ dependencies = [
 [[package]]
 name = "mango-common"
 version = "3.0.0"
-source = "git+https://github.com/sircrusher/mango-v3#2930727acc2a6b15abfab8f4aad10ad860db782a"
+source = "git+https://github.com/blockworks-foundation/mango-v3#856be2231ea419d5423400e4f57d20e44ca20647"
 dependencies = [
  "bytemuck",
  "solana-program",
@@ -2770,7 +2770,7 @@ dependencies = [
 [[package]]
 name = "mango-logs"
 version = "0.1.0"
-source = "git+https://github.com/sircrusher/mango-v3#2930727acc2a6b15abfab8f4aad10ad860db782a"
+source = "git+https://github.com/blockworks-foundation/mango-v3#856be2231ea419d5423400e4f57d20e44ca20647"
 dependencies = [
  "anchor-lang 0.20.1",
  "base64 0.13.0",
@@ -2792,10 +2792,10 @@ dependencies = [
 [[package]]
 name = "mango-macro"
 version = "3.0.0"
-source = "git+https://github.com/sircrusher/mango-v3#2930727acc2a6b15abfab8f4aad10ad860db782a"
+source = "git+https://github.com/blockworks-foundation/mango-v3#856be2231ea419d5423400e4f57d20e44ca20647"
 dependencies = [
  "bytemuck",
- "mango-common 3.0.0 (git+https://github.com/sircrusher/mango-v3)",
+ "mango-common 3.0.0 (git+https://github.com/blockworks-foundation/mango-v3)",
  "quote 1.0.14",
  "safe-transmute",
  "solana-program",
