@@ -270,7 +270,7 @@ pub async fn init(
                                             }
                                         } else if old_events[idx].event_type
                                             != events[idx].event_type
-                                            && old_events[idx].padding != events[idx].padding
+                                            || old_events[idx].padding != events[idx].padding
                                         {
                                             info!("found changed event {} idx {}", mkt.name, idx);
 
