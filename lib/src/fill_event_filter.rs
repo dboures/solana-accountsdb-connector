@@ -169,6 +169,7 @@ pub async fn init(
     let mut chain = ChainData::new();
     let mut events_cache: HashMap<String, [AnyEvent; 256]> = HashMap::new();
     let mut seq_num_cache = HashMap::new();
+    let mut last_ev_q_versions = HashMap::<String, (u64, u64)>::new();
 
     // update handling thread, reads both sloths and account updates
     tokio::spawn(async move {
@@ -179,6 +180,7 @@ pub async fn init(
                         account_write.pubkey,
                         AccountData {
                             slot: account_write.slot,
+                            write_version: account_write.write_version,
                             account: WritableAccount::create(
                                 account_write.lamports,
                                 account_write.data.clone(),
@@ -214,9 +216,18 @@ pub async fn init(
                 // TODO: only if account was written to or slot was updated
 
                 let mkt_pk = mkt.event_queue.parse::<Pubkey>().unwrap();
+                let last_ev_q_version = last_ev_q_versions.get(&mkt.event_queue);
 
                 match chain.account(&mkt_pk) {
-                    Ok(account) => {
+                    Ok(account_info) => {
+                        // only process if the account state changed
+                        let ev_q_version = (account_info.slot, account_info.write_version);
+                        if ev_q_version == *last_ev_q_version.unwrap_or(&(0, 0)) {
+                            continue;
+                        }
+                        last_ev_q_versions.insert(mkt.event_queue.clone(), ev_q_version);
+                        let account = &account_info.account;
+
                         const HEADER_SIZE: usize = size_of::<EventQueueHeader>();
                         let header_data = array_ref![account.data(), 0, HEADER_SIZE];
                         let header: &EventQueueHeader = bytemuck::from_bytes(header_data);

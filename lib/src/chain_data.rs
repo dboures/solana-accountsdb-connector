@@ -20,6 +20,7 @@ pub struct SlotData {
 #[derive(Clone, Debug)]
 pub struct AccountData {
     pub slot: u64,
+    pub write_version: u64,
     pub account: AccountSharedData,
 }
 
@@ -144,7 +145,9 @@ impl ChainData {
                     .unwrap_or(v.len());
                 let pos = v.len() - rev_pos;
                 if pos < v.len() && v[pos].slot == account.slot {
-                    v[pos] = account;
+                    if v[pos].write_version < account.write_version {
+                        v[pos] = account;
+                    }
                 } else {
                     v.insert(pos, account);
                 }
@@ -237,7 +240,7 @@ impl ChainData {
     }
 
     /// Ref to the most recent live write of the pubkey
-    pub fn account<'a>(&'a self, pubkey: &Pubkey) -> anyhow::Result<&'a AccountSharedData> {
+    pub fn account<'a>(&'a self, pubkey: &Pubkey) -> anyhow::Result<&'a AccountData> {
         self.accounts
             .get(pubkey)
             .ok_or(anyhow::anyhow!("account {} not found", pubkey))?
@@ -245,6 +248,5 @@ impl ChainData {
             .rev()
             .find(|w| self.is_account_write_live(w))
             .ok_or(anyhow::anyhow!("account {} has no live data", pubkey))
-            .map(|w| &w.account)
     }
 }
