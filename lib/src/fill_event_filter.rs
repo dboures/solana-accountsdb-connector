@@ -239,23 +239,25 @@ pub async fn init(
                         let events_data = array_ref![account.data(), HEADER_SIZE, QUEUE_SIZE];
                         let events: &[AnyEvent; QUEUE_LEN] = bytemuck::from_bytes(events_data);
 
+                        trace!("evq v {:?}", ev_q_version);
+
                         match seq_num_cache.get(&mkt.event_queue) {
                             Some(old_seq_num) => match events_cache.get(&mkt.event_queue) {
                                 Some(old_events) => {
+                                    // seq_num = N means that events (N-QUEUE_LEN) until N-1 are available
                                     let start_seq_num =
-                                        max(*old_seq_num, header.seq_num) + 1 - QUEUE_LEN;
-
+                                        max(*old_seq_num, header.seq_num) - QUEUE_LEN;
                                     let mut checkpoint = Vec::new();
 
-                                    for off in 0..QUEUE_LEN {
-                                        let idx = (start_seq_num + off) % QUEUE_LEN;
+                                    for seq_idx in start_seq_num..header.seq_num {
+                                        let idx = seq_idx % QUEUE_LEN;
 
                                         // there are three possible cases:
                                         // 1) the event is past the old seq num, hence guaranteed new event
                                         // 2) the event is not matching the old event queue
                                         // 3) all other events are matching the old event queue
                                         // the order of these checks is important so they are exhaustive
-                                        if start_seq_num + off > *old_seq_num {
+                                        if seq_idx >= *old_seq_num {
                                             trace!(
                                                 "found new event {} idx {} type {}",
                                                 mkt.name,
@@ -266,7 +268,6 @@ pub async fn init(
                                             // new fills are published and recorded in checkpoint
                                             if events[idx].event_type == EventType::Fill as u8 {
                                                 let fill: FillEvent = bytemuck::cast(events[idx]);
-
                                                 fill_update_sender
                                                     .try_send(FillEventFilterMessage::Update(
                                                         FillUpdate {
@@ -283,7 +284,10 @@ pub async fn init(
                                             != events[idx].event_type
                                             || old_events[idx].padding != events[idx].padding
                                         {
-                                            info!("found changed event {} idx {}", mkt.name, idx);
+                                            info!(
+                                                "found changed event {} idx {} seq_idx {} header seq num {} old seq num {}",
+                                                mkt.name, idx, seq_idx, header.seq_num, *old_seq_num
+                                            );
 
                                             // first revoke old event if a fill
                                             if old_events[idx].event_type == EventType::Fill as u8 {
@@ -304,7 +308,6 @@ pub async fn init(
                                             // then publish new if its a fill and record in checkpoint
                                             if events[idx].event_type == EventType::Fill as u8 {
                                                 let fill: FillEvent = bytemuck::cast(events[idx]);
-
                                                 fill_update_sender
                                                     .try_send(FillEventFilterMessage::Update(
                                                         FillUpdate {
