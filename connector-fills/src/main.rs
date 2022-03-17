@@ -99,7 +99,7 @@ async fn main() -> anyhow::Result<()> {
                     let mut peer_copy = peers_ref_thread.lock().unwrap().clone();
 
                     for (k, v) in peer_copy.iter_mut() {
-                        trace!("  > {}", k);
+                        debug!("  > {}", k);
 
                         let json = serde_json::to_string(&update);
 
