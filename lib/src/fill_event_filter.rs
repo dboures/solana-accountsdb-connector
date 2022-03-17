@@ -9,7 +9,12 @@ use solana_sdk::{
     clock::Epoch,
     pubkey::Pubkey,
 };
-use std::{cmp::max, collections::HashMap, mem::size_of};
+use std::{
+    cmp::max,
+    collections::{HashMap, HashSet},
+    mem::size_of,
+    str::FromStr,
+};
 
 use arrayref::array_ref;
 use mango::queue::{AnyEvent, EventQueueHeader, EventType, FillEvent};
@@ -218,11 +223,20 @@ pub async fn init(
     let mut seq_num_cache = HashMap::new();
     let mut last_ev_q_versions = HashMap::<String, (u64, u64)>::new();
 
+    let relevant_pubkeys = markets
+        .iter()
+        .map(|m| Pubkey::from_str(&m.event_queue).unwrap())
+        .collect::<HashSet<Pubkey>>();
+
     // update handling thread, reads both sloths and account updates
     tokio::spawn(async move {
         loop {
             tokio::select! {
                 Ok(account_write) = account_write_queue_receiver_c.recv() => {
+                    if !relevant_pubkeys.contains(&account_write.pubkey) {
+                        continue;
+                    }
+
                     chain_cache.update_account(
                         account_write.pubkey,
                         AccountData {
