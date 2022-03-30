@@ -4351,6 +4351,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "service-mango-liq-feed"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "serde",
+ "serde_derive",
+ "solana-geyser-connector-lib",
+ "tokio",
+]
+
+[[package]]
 name = "service-mango-pnl"
 version = "0.1.0"
 dependencies = [

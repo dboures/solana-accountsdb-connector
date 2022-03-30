@@ -6,6 +6,7 @@ members = [
         "connector-mango",
         "service-mango-fills",
         "service-mango-pnl",
+        "service-mango-liq-feed",
 ]
 
 

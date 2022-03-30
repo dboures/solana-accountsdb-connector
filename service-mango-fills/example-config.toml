@@ -2,7 +2,7 @@ bind_ws_addr = "127.0.0.1:8080"
 
 [source]
 dedup_queue_size = 50000
-rpc_ws_url = ""
+rpc_ws_url = "https://ssc-dao.genesysgo.net/"
 
 [[source.grpc_sources]]
 name = "server"
@@ -16,7 +16,7 @@ retry_connection_sleep_secs = 30
 #domain_name = "example.com"
 
 [source.snapshot]
-rpc_http_url = ""
+rpc_http_url = "https://ssc-dao.genesysgo.net/"
 program_id = "mv3ekLzLbnVPNxjSKvqBpU3ZeZXPQdEC3bp5MDEBG68"
 
 [[markets]]

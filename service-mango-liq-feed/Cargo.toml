@@ -1,0 +1,18 @@
+[package]
+name = "service-mango-liq-feed"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-geyser-connector-lib = { path = "../lib" }
+
+anyhow = "1.0"
+
+
+async-trait = "0.1"
+tokio = { version = "1", features = ["full"] }
+
+serde = "1.0.130"
+serde_derive = "1.0.130"
